@@ -354,3 +354,196 @@ mod.tratd.local<- aov(Grain_yield ~ Name_city + Name_city:Block +
 
 anova(mod.tratd.local)
 
+## Comparações múltiplas 
+library(agricolae)
+
+#Media das tratamentos dentro de cada local
+
+(tukey.treatd.L1 <- with(subset(dados, Name_city == "Planaltina"),
+                        HSD.test(Grain_yield, 
+                                 Treat,
+                                 45,
+                                 3.0)))
+
+(tukey.treatd.L2 <- with(subset(dados, Name_city == "Sinop"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L3 <- with(subset(dados, Name_city == "C. Mourão"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L4 <- with(subset(dados, Name_city == "Londrina"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L5 <- with(subset(dados, Name_city == "7 Lagoas ($)"),
+                         HSD.test(Grain_yield,
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L6 <- with(subset(dados, Name_city == "Goiânia"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L7 <- with(subset(dados, Name_city == "Londrina (2)"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L8 <- with(subset(dados, Name_city == "Dourados"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L9 <- with(subset(dados, Name_city == "S. Rai. das Mangabeiras"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L10 <- with(subset(dados, Name_city == "Vilhena"),
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
+
+(tukey.treatd.L11 <- with(subset(dados, Name_city == "Sinop (2)"),
+                          HSD.test(Grain_yield, 
+                                   Treat,
+                                   45,
+                                   3.0)))
+
+(tukey.treatd.L12 <- with(subset(dados, Name_city == "C. Mourão (2)"),
+                          HSD.test(Grain_yield, 
+                                   Treat,
+                                   45,
+                                   3.0)))
+
+(tukey.treatd.L13 <- with(subset(dados, Name_city == "N. S. das Dores"),
+                          HSD.test(Grain_yield, 
+                                   Treat,
+                                   45,
+                                   3.0)))
+
+(tukey.treatd.L14 <- with(subset(dados, Name_city == "N. S. das Dores ($)"),
+                          HSD.test(Grain_yield, 
+                                   Treat,
+                                   45,
+                                   3.0)))
+
+(tukey.treatd.L15 <- with(subset(dados, Name_city == "Janaúba"),
+                          HSD.test(Grain_yield, 
+                                   Treat,
+                                   45,
+                                   3.0)))
+
+
+##
+
+tukey.treatd.L1$groups$Treat <- rownames(tukey.treatd.L1$groups)
+tukey.treatd.L1$groups$Name_city <- "Planaltina"
+
+tukey.treatd.L2$groups$Treat <- rownames(tukey.treatd.L2$groups)
+tukey.treatd.L2$groups$Name_city <- "Sinop"
+
+tukey.treatd.L3$groups$Treat <- rownames(tukey.treatd.L3$groups)
+tukey.treatd.L3$groups$Name_city <- "C. Mourão"
+
+tukey.treatd.L4$groups$Treat <- rownames(tukey.treatd.L4$groups)
+tukey.treatd.L4$groups$Name_city <- "Londrina"
+
+tukey.treatd.L5$groups$Treat <- rownames(tukey.treatd.L5$groups)
+tukey.treatd.L5$groups$Name_city <- "7 Lagoas ($)"
+
+tukey.treatd.L6$groups$Treat <- rownames(tukey.treatd.L6$groups)
+tukey.treatd.L6$groups$Name_city <- "Goiânia"
+
+tukey.treatd.L7$groups$Treat <- rownames(tukey.treatd.L7$groups)
+tukey.treatd.L7$groups$Name_city <- "Londrina (2)"
+
+tukey.treatd.L8$groups$Treat <- rownames(tukey.treatd.L8$groups)
+tukey.treatd.L8$groups$Name_city <- "Dourados"
+
+tukey.treatd.L9$groups$Treat <- rownames(tukey.treatd.L9$groups)
+tukey.treatd.L9$groups$Name_city <- "S. Rai. das Mangabeiras"
+
+tukey.treatd.L10$groups$Treat <- rownames(tukey.treatd.L10$groups)
+tukey.treatd.L10$groups$Name_city <- "Vilhena"
+
+tukey.treatd.L11$groups$Treat <- rownames(tukey.treatd.L11$groups)
+tukey.treatd.L11$groups$Name_city <- "Sinop (2)"
+
+tukey.treatd.L12$groups$Treat <- rownames(tukey.treatd.L12$groups)
+tukey.treatd.L12$groups$Name_city <- "C. Mourão (2)"
+
+tukey.treatd.L13$groups$Treat <- rownames(tukey.treatd.L13$groups)
+tukey.treatd.L13$groups$Name_city <- "N. S. das Dores ($)"
+
+tukey.treatd.L14$groups$Treat <- rownames(tukey.treatd.L14$groups)
+tukey.treatd.L14$groups$Name_city <- "N. S. das Dores"
+
+tukey.treatd.L15$groups$Treat <- rownames(tukey.treatd.L15$groups)
+tukey.treatd.L15$groups$Name_city <- "Janaúba"
+
+(tukey.treat <- data.frame(rbind(
+  tukey.treatd.L1$groups,
+  tukey.treatd.L2$groups,
+  tukey.treatd.L3$groups,
+  tukey.treatd.L4$groups,
+  tukey.treatd.L5$groups,
+  tukey.treatd.L6$groups,
+  tukey.treatd.L7$groups,
+  tukey.treatd.L8$groups,
+  tukey.treatd.L9$groups,
+  tukey.treatd.L10$groups,
+  tukey.treatd.L11$groups,
+  tukey.treatd.L12$groups,
+  tukey.treatd.L13$groups,
+  tukey.treatd.L14$groups,
+  tukey.treatd.L15$groups
+)))
+
+
+#plots individuais
+ggplot(tukey.treatd.L1$groups,
+       aes(x = Treat,
+           y = Grain_yield,
+           label = groups,
+           fill = Treat)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(x = Treat,
+                    ymin = Grain_yield - Tukey.Tratd.L1$statistics$MSD/2,
+                    ymax = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2)) +
+  facet_grid(~ Name_city) +
+  geom_text(aes(x = Treat,
+                y = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2 + 1)) +
+  xlab("Tratamentos") +
+  ylab("Rendimento de Graos")
+
+#plot para todos juntos
+ggplot(tukey.treat,
+       aes(x = Treat,
+           y = Grain_yield,
+           label = groups,
+           fill = Treat)) +
+  geom_bar(stat = "identity") +
+  geom_errorbar(aes(x = Treat,
+                    ymin = Grain_yield - Tukey.Tratd.L1$statistics$MSD/2,
+                    ymax = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2)) +
+  facet_grid(~ Name_city) +
+  geom_text(aes(x = Treat,
+                y = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2 + 1)) +
+  xlab("Tratamentos") +
+  ylab("Rendimento de Graos")
