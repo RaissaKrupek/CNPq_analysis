@@ -19,8 +19,24 @@ ggplot(dados,
            y = Grain_yield,
            color = Treat)) + 
   geom_point() +
+  theme(axis.text.x = element_blank()) 
   facet_wrap(~Name_city) +
   xlab("Tratamentos") +
+  ylab("Rendimento de Grao (t/ha)") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.title = element_blank())
+
+
+ggplot(dados,
+       aes(x = Name_city ,
+           y = Grain_yield,
+           color = Name_city)) + 
+  geom_point() +
+  theme(axis.text.x = element_blank()) 
+  facet_wrap(~Treat) +
+  xlab("Locais") +
   ylab("Rendimento de Grao (t/ha)") +
   theme_bw() +
   theme(legend.position = "bottom",
@@ -161,6 +177,7 @@ ggplot(subset(dados, Name_city == "Dourados"),
   geom_point()
 
 anova(mod.l8)
+#Nao rejeita H0 - media dos tratamentos nao diferem entre si
 
 #Local 9 - S. Rai. das Mangabeiras
 mod.l9 <- aov(Grain_yield ~ Block + Treat,
