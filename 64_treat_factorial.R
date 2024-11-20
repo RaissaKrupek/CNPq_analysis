@@ -1,0 +1,1 @@
+# Análise conjunta para grupos de experimentos casualizados em blocos em fatorial
