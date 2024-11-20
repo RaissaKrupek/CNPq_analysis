@@ -72,5 +72,6 @@ mod.conj <- aov(Grain_yield ~ Name_city + Block%in%Name_city + Treat + Season +
 
 anova(mod.conj)
 
-plot(mod.conj)
+
+## Efeito de Tratamentos dentro de cada Local
 
