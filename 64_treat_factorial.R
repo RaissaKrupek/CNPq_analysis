@@ -10,9 +10,9 @@ str(first_analysis)
 library(dplyr)
 dados <- dados%>%
   mutate(Block = as.character(Block),
-         Treat = as.character(Treat),
+         Treat = as.factor(Treat),
          Name_city = as.character(Name_city),
-         Season = as.character(Season))
+         Season = as.factor(Season))
 str(dados)
 colnames(dados)
 
@@ -72,6 +72,57 @@ mod.conj <- aov(Grain_yield ~ Name_city + Block%in%Name_city + Treat + Season +
 
 anova(mod.conj)
 
+## Graficos
+Tratamentos <- dados$Treat:dados$Season
 
-## Efeito de Tratamentos dentro de cada Local
+dados1 <- data.frame(dados,Tratamentos)
+head(dados1)
+
+library(ggplot2)
+library(tidyverse)
+
+ggplot(dados,
+       aes(x = Treat,
+           y = Grain_yield,
+           color = Season)) +
+  geom_point() +
+  facet_wrap(~ Name_city) +
+  xlab("Tratamentos") +
+  ylab("Grain_yield") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.title = element_blank())
+
+
+ggplot(data=dados1,
+       aes(x = Tratamentos,
+           y = Grain_yield,
+           color = Name_city,
+           group = Name_city)) + 
+  geom_point(stat = "summary",
+             fun = "mean") +
+  geom_line(stat = "summary",
+            fun = "mean") +
+  xlab("Treatment") +
+  ylab("Grain_yield") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.title = element_blank())
+
+
+# analisando o grafico eh possivel ver que provavelmente ha interacao significativa 
+ggplot(dados1, aes(x = Treat, y = Grain_yield, group = Season, color = Season)) +
+  geom_point(stat = 'summary', fun.y = mean)+
+  geom_line(stat = 'summary', fun.y = mean)+
+  xlab("Irrigação") +
+  ylab("Peso das plantas")
+
+ggplot(dados1, aes(x = Season, y = Grain_yield, group = Treat, color = Treat)) +
+  geom_point(stat = 'summary', fun.y = mean)+
+  geom_line(stat = 'summary', fun.y = mean)+
+  xlab("Calagem") +
+  ylab("Peso das plantas")
+
 
