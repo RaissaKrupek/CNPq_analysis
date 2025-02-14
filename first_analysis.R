@@ -564,3 +564,5 @@ ggplot(tukey.treat,
                 y = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2 + 1)) +
   xlab("Tratamentos") +
   ylab("Rendimento de Graos")
+
+#bla
