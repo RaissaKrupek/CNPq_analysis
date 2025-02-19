@@ -19,14 +19,30 @@ ggplot(dados,
            y = Grain_yield,
            color = Treat)) + 
   geom_point() +
-  theme(axis.text.x = element_blank()) 
+  theme(axis.text.x = element_blank()) +
   facet_wrap(~Name_city) +
   xlab("Tratamentos") +
   ylab("Rendimento de Grao (t/ha)") +
   theme_bw() +
   theme(legend.position = "bottom",
         legend.direction = "horizontal",
-        legend.title = element_blank())
+        legend.title = element_blank())          
+
+
+ggplot(dados, aes(x = Treat, y = Grain_yield, color = Treat)) + 
+  geom_point() +
+  theme_bw() +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 8),       # Reduz o tamanho do texto da legenda
+    legend.key.size = unit(0.3, "cm")           # Diminui o tamanho das chaves na legenda
+  ) +
+  guides(color = guide_legend(nrow = 1)) +      # Organiza a legenda em uma única linha
+  facet_wrap(~Name_city) +
+  labs(x = "Tratamentos", y = "Rendimento de Grão (t/ha)")
 
 
 ggplot(dados,
@@ -34,7 +50,7 @@ ggplot(dados,
            y = Grain_yield,
            color = Name_city)) + 
   geom_point() +
-  theme(axis.text.x = element_blank()) 
+  theme(axis.text.x = element_blank()) +
   facet_wrap(~Treat) +
   xlab("Locais") +
   ylab("Rendimento de Grao (t/ha)") +
@@ -42,6 +58,22 @@ ggplot(dados,
   theme(legend.position = "bottom",
         legend.direction = "horizontal",
         legend.title = element_blank())
+
+
+ggplot(dados, aes(x = Name_city, y = Grain_yield, color = Name_city)) + 
+  geom_point() +
+  theme_bw() +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.title = element_blank(),
+    legend.text = element_text(size = 8),         # Reduz o tamanho do texto da legenda
+    legend.key.size = unit(0.3, "cm")             # Diminui o tamanho das chaves na legenda
+  ) +
+  guides(color = guide_legend(nrow = 1)) +        # Organiza a legenda em uma única linha
+  facet_wrap(~Treat) +
+  labs(x = "Locais", y = "Rendimento de Grão (t/ha)")
 
 
 #Analises Individuais
@@ -315,7 +347,7 @@ QMResiduo<- c(QMResiduo1, QMResiduo2, QMResiduo3, QMResiduo4, QMResiduo5,
               QMResiduo6, QMResiduo7, QMResiduo8, QMResiduo9, QMResiduo10, 
               QMResiduo11, QMResiduo12, QMResiduo13, QMResiduo14, QMResiduo15)
 
-(max(QMResiduo)/min(QMResiduo))
+(max(QMResiduo) / min(QMResiduo))
 
 # ANOVA 
 mod.conj <- aov(Grain_yield ~ Name_city + Name_city:Block+
@@ -324,7 +356,7 @@ mod.conj <- aov(Grain_yield ~ Name_city + Name_city:Block+
 anova(mod.conj)
 
 ## Análise exploratória (descritiva)
-
+library(ggplot2)
 ggplot(data=dados,
        aes(x = Treat,
            y = Grain_yield,
@@ -370,6 +402,8 @@ mod.tratd.local<- aov(Grain_yield ~ Name_city + Name_city:Block +
                       data=dados)
 
 anova(mod.tratd.local)
+
+## Vilhena e C.Mourao(2) nao foram significativo para os tratamentos -> trat nao diferem dentro dos respectivos locais  
 
 ## Comparações múltiplas 
 library(agricolae)
@@ -467,7 +501,7 @@ library(agricolae)
                                    3.0)))
 
 
-##
+
 
 tukey.treatd.L1$groups$Treat <- rownames(tukey.treatd.L1$groups)
 tukey.treatd.L1$groups$Name_city <- "Planaltina"
@@ -541,26 +575,31 @@ ggplot(tukey.treatd.L1$groups,
            fill = Treat)) +
   geom_bar(stat = "identity") +
   geom_errorbar(aes(x = Treat,
-                    ymin = Grain_yield - Tukey.Tratd.L1$statistics$MSD/2,
-                    ymax = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2)) +
+                    ymin = Grain_yield - tukey.treatd.L1$statistics$MSD/2,
+                    ymax = Grain_yield + tukey.treatd.L1$statistics$MSD/2)) +
   facet_grid(~ Name_city) +
   geom_text(aes(x = Treat,
-                y = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2 + 1)) +
+                y = Grain_yield + tukey.treatd.L1$statistics$MSD/2 + 1)) +
   xlab("Tratamentos") +
   ylab("Rendimento de Graos")
 
 #plot para todos juntos
-ggplot(tukey.treat,
+install.packages("GGally")
+library(GGally)
+
+ggpairs(tukey.treat, columns= 1:4,
        aes(x = Treat,
            y = Grain_yield,
            label = groups,
            fill = Treat)) +
   geom_bar(stat = "identity") +
   geom_errorbar(aes(x = Treat,
-                    ymin = Grain_yield - Tukey.Tratd.L1$statistics$MSD/2,
-                    ymax = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2)) +
+                    ymin = Grain_yield - tukey.treatd.L1$statistics$MSD/2,
+                    ymax = Grain_yield + tukey.treatd.L1$statistics$MSD/2)) +
   facet_grid(~ Name_city) +
   geom_text(aes(x = Treat,
-                y = Grain_yield + Tukey.Tratd.L1$statistics$MSD/2 + 1)) +
+                y = Grain_yield + tukey.treatd.L1$statistics$MSD/2 + 1)) +
+  theme(legend.position = "button")
   xlab("Tratamentos") +
   ylab("Rendimento de Graos")
+
