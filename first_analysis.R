@@ -17,6 +17,7 @@ colnames(dados)
 library(ggplot2)
 
 # Distribution per environment ----
+# nao precisa ser adicionado ao app
 
 ggplot(dados, aes(x = Genotype, y = Grain_yield, color = Genotype)) + 
   geom_point() +
@@ -32,10 +33,12 @@ ggplot(dados, aes(x = Genotype, y = Grain_yield, color = Genotype)) +
   guides(color = guide_legend(nrow = 1)) +# Organiza a legenda em uma única linha
   facet_wrap(~Environment) +
   labs(x = "Genotype", y = "Grain Yield (t/ha)")
-X11()
+
 
 
 # Interaction plots ----
+# sera adicionado ao app
+
 library(tidyr)
 # GEI
 GEI <- dados %>% 
@@ -47,7 +50,7 @@ GEI <- dados %>%
 index = order(GEI$Grain_yield, decreasing = FALSE)
 GEI = GEI[index,]
 
-# Plot
+# Plot 
 (p_E <- GEI %>% ggplot(aes(Environment, Grain_yield)) +
     geom_line(linewidth = 0.8, aes(group = Genotype, color = Genotype, 
                                    alpha = ifelse(Genotype %in% c('1', '10', '64', '24', '44', '7'), 1, 0.7))) +
@@ -62,7 +65,49 @@ GEI = GEI[index,]
                        breaks = c('1', '10', '64', '24', '44', '7')))
 
 
+
+# GEI - outra forma de abordar o grafico feito pela vitoria
+library(ggplot2)
+ggplot(data=dados,
+       aes(x = Environment,
+           y = Grain_yield,
+           color = Genotype,
+           group = Genotype)) + 
+  geom_point(stat = "summary",
+             fun = "mean") +
+  geom_line(stat = "summary",
+            fun = "mean") +
+  xlab("Environment") +
+  ylab("Grain Yield (t/ha)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))+
+  guides(color = guide_legend(title = "Genotype", ncol = 2, alpha = "none"))
+
+
+
+# Interacao Genotipo vs Season 
+# nao precisa colocar no app
+library(ggplot2)
+ggplot(data=dados,
+       aes(x = Season,
+           y = Grain_yield,
+           color = Environment,
+           group = Environment)) + 
+  geom_point(stat = "summary",
+             fun = "mean") +
+  geom_line(stat = "summary",
+            fun = "mean") +
+  xlab("Season") +
+  ylab("Grain yield (t/ha)") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.title = element_blank())
+
+
+
 # Boxplots ----
+# pode ser colocado como analise exploratoria
 ggplot(dados, aes(x = Environment, y = Grain_yield)) + 
   geom_boxplot(fill = "#cc662f",
                colour = "black",
@@ -82,7 +127,10 @@ mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + G
 
 anova(mod)
 
+
+
 #Analises Individuais para Cada Local ----
+# nao precisa ser colocado no app
 library(lmtest)
 library(dplyr)
 
@@ -329,7 +377,7 @@ lmtest::bptest(mod.l12) #studentized Breusch-Pagan test
 
 anova(mod.l12)
 
-#grafico para verificar homogeneidade de variancias 
+      #grafico para verificar homogeneidade de variancias 
 ggplot(dados %>% filter(Environment == "N. S. das Dores 01"),
        aes(x = Genotype, 
            y = rstudent(mod.l12), 
@@ -386,7 +434,7 @@ QMResiduo<- c(QMResiduo1, QMResiduo2, QMResiduo3, QMResiduo4, QMResiduo5,
 
 (max(QMResiduo) / min(QMResiduo))
 
-# ANOVA modelo conjunto - ja colocada acima
+# ANOVA modelo conjunto - ja colocado acima
 library(lmtest)
 mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + Genotype:Season + 
              Environment:Genotype + Environment:Season + Environment:Genotype:Season,
@@ -394,52 +442,12 @@ mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + G
 
 anova(mod)
 
-## Análise exploratória (descritiva)
-
-# Interacao Genotipo Ambiente - Grain_yield vs. Genotype
-library(ggplot2)
-ggplot(data=dados,
-       aes(x = Genotype,
-           y = Grain_yield,
-           color = Environment,
-           group = Environment)) + 
-  geom_point(stat = "summary",
-             fun = "mean") +
-  geom_line(stat = "summary",
-            fun = "mean") +
-  xlab("Genotypement") +
-  ylab("Grain_yield") +
-  theme_bw() +
-  theme(legend.position = "bottom",
-        legend.direction = "horizontal",
-        legend.title = element_blank())
-
-# Interacao Genotipo Ambiente - outra forma de abordar o grafico feito pela vitoria
-library(ggplot2)
-ggplot(data=dados,
-       aes(x = Environment,
-           y = Grain_yield,
-           color = Genotype,
-           group = Genotype)) + 
-  geom_point(stat = "summary",
-             fun = "mean") +
-  geom_line(stat = "summary",
-            fun = "mean") +
-  xlab("Environment") +
-  ylab("Grain Yield (t/ha)") +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust=1))+
-  guides(color = guide_legend(title = "Genotype", ncol = 2, alpha = "none"))
+#Como o efeito da interação entre Locais e Tratamentos foi significativo,podemos avaliar o efeito de Tratamentos dentro de cada um dos Locais.
 
 
-        #   element_blank(),
-        # 
-        # 
-        # guides(color = guide_legend(title = "Genotype", ncol = 2), alpha = "none"))
 
-## Como o efeito da interação entre Locais e Tratamentos foi significativo,vamos avaliar o efeito de Tratamentos dentro de cada um dos Locais.
-
-# Efeito de Tratamentos dentro de cada Local - Segundo o Augusto nao sera necessario incluir na analise
+# ------------------------------------------------------------------------------
+# Efeito de Tratamentos dentro de cada Local e Comparacoes de Medias- Segundo o Augusto nao sera necessario incluir na analise
 
 local.m <- model.matrix( ~ Environment - 1, 
                          dados)
@@ -469,10 +477,10 @@ anova(mod.tratd.local)
 #            data=dados)
 
 
-## Comparações múltiplas 
+## Comparações múltiplas de medias
 library(agricolae)
 
-#Media das tratamentos dentro de cada local - Tukey eh um teste mais concervacao, como nao ha variacoes mto grandes eh normal nao dar tantas diferencas significativas
+#Media das tratamentos dentro de cada local - Tukey eh um teste mais concervativo, como nao ha variacoes mto grandes eh normal nao dar tantas diferencas significativas
 
 (tukey.Genotyped.L1 <- with(subset(dados, Environment == "Planaltina"),
                          HSD.test(Grain_yield, 
