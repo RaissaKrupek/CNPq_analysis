@@ -67,7 +67,7 @@ GEI = GEI[index,]
 
 
 
-# GEI - outra forma de abordar o grafico feito pela vitoria
+# GEI + Season
 library(ggplot2)
 ggplot(data=dados,
        aes(x = Environment, 
@@ -86,7 +86,8 @@ ggplot(data=dados,
   theme_bw() +
   theme(axis.text.x = element_text(angle = 45, hjust=1),
         legend.position = "none")+
-  guides(color = guide_legend(title = "Genotype", ncol = 2, alpha = "none"))
+  guides(color = guide_legend(title = "Genotype", ncol = 2, alpha = "none"))+
+  facet_wrap(~Season)
 
 
 
