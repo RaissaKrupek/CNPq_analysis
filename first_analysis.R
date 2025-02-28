@@ -44,17 +44,18 @@ library(tidyr)
 GEI <- dados %>% 
   group_by(Environment, Genotype) %>% 
   summarise(Grain_yield = mean(Grain_yield, na.rm = TRUE)) %>% 
-  drop_na()
- 
+  drop_na() #remove linhas com valores ausentes em um df
+  #todas as linhas que compartilham o mesmo Environment e Genotype serão tratadas juntas.
+
 # Ordering
-index = order(GEI$Grain_yield, decreasing = FALSE)
+index = order(GEI$Grain_yield, decreasing = FALSE)#organiza os valores de rendimentos de graos na forma crescente
 GEI = GEI[index,]
 
 # Plot 
 (p_E <- GEI %>% ggplot(aes(Environment, Grain_yield)) +
     geom_line(linewidth = 0.8, aes(group = Genotype, color = Genotype, 
                                    alpha = ifelse(Genotype %in% c('1', '10', '64', '24', '44', '7'), 1, 0.7))) +
-    labs(title = "Interaction between genotype and environment",
+    labs(title = "Interaction between Genotype and Environment",
          x = "Environment",
          y = "Grain Yield (t/ha)") +
     guides(color = guide_legend(title = "Genotype", ncol = 1), alpha = "none") +
@@ -69,18 +70,22 @@ GEI = GEI[index,]
 # GEI - outra forma de abordar o grafico feito pela vitoria
 library(ggplot2)
 ggplot(data=dados,
-       aes(x = Environment,
+       aes(x = Environment, 
            y = Grain_yield,
            color = Genotype,
-           group = Genotype)) + 
+           group = Genotype,
+           alpha = ifelse(Genotype %in% c(), 1, 0.7))) + 
   geom_point(stat = "summary",
              fun = "mean") +
-  geom_line(stat = "summary",
+  geom_line(linewidth = 0.8,
+            stat = "summary",
             fun = "mean") +
-  xlab("Environment") +
-  ylab("Grain Yield (t/ha)") +
+  labs(title = "Interaction between Genotype and Environment",
+       x = "Environment",
+       y = "Grain Yield (t/ha)") +
   theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust=1))+
+  theme(axis.text.x = element_text(angle = 45, hjust=1),
+        legend.position = "none")+
   guides(color = guide_legend(title = "Genotype", ncol = 2, alpha = "none"))
 
 
@@ -100,7 +105,7 @@ ggplot(data=dados,
   xlab("Season") +
   ylab("Grain yield (t/ha)") +
   theme_bw() +
-  theme(legend.position = "bottom",
+  theme(legend.position = "botton",
         legend.direction = "horizontal",
         legend.title = element_blank())
 
