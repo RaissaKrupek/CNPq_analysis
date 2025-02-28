@@ -8,73 +8,79 @@ library(dplyr)
 dados <- dados %>%
   mutate(Block = as.character(Block), 
          Treat = as.character(Treat), 
-         Name_city = as.character(Name_city),
-         Grain_yield = as.numeric(Grain_yield, na.rm = TRUE))
+         Environment = as.character(Environment),
+         Grain_yield = as.numeric(Grain_yield, na.rm = TRUE),
+         Season = as.character(Season))
 str(dados)
 colnames(dados)
 
 library(ggplot2)
-ggplot(dados,
-       aes(x = Treat,
-           y = Grain_yield,
-           color = Treat)) + 
-  geom_point() +
-  theme(axis.text.x = element_blank()) +
-  facet_wrap(~Name_city) +
-  xlab("Tratamentos") +
-  ylab("Rendimento de Grao (t/ha)") +
-  theme_bw() +
-  theme(legend.position = "bottom",
-        legend.direction = "horizontal",
-        legend.title = element_blank())          
-
-
+# Distribution per environment ----
 ggplot(dados, aes(x = Treat, y = Grain_yield, color = Treat)) + 
   geom_point() +
   theme_bw() +
   theme(
     axis.text.x = element_blank(),
-    legend.position = "bottom",
+    legend.position = "none",
     legend.direction = "horizontal",
     legend.title = element_blank(),
     legend.text = element_text(size = 8),       # Reduz o tamanho do texto da legenda
-    legend.key.size = unit(0.3, "cm")           # Diminui o tamanho das chaves na legenda
-  ) +
-  guides(color = guide_legend(nrow = 1)) +      # Organiza a legenda em uma única linha
-  facet_wrap(~Name_city) +
-  labs(x = "Tratamentos", y = "Rendimento de Grão (t/ha)")
+    legend.key.size = unit(0.3, "cm")
+  ) +   
+  guides(color = guide_legend(nrow = 1)) +# Organiza a legenda em uma única linha
+  facet_wrap(~Environment) +
+  labs(x = "Genotype", y = "Grain Yield (t/ha)")
+X11()
 
 
-ggplot(dados,
-       aes(x = Name_city ,
-           y = Grain_yield,
-           color = Name_city)) + 
-  geom_point() +
-  theme(axis.text.x = element_blank()) +
-  facet_wrap(~Treat) +
-  xlab("Locais") +
-  ylab("Rendimento de Grao (t/ha)") +
-  theme_bw() +
-  theme(legend.position = "bottom",
-        legend.direction = "horizontal",
-        legend.title = element_blank())
+# Interaction plots ----
+library(tidyr)
+# GEI
+GEI <- dados %>% 
+  group_by(Environment, Treat) %>% 
+  summarise(Grain_yield = mean(Grain_yield, na.rm = TRUE)) %>% 
+  drop_na()
+67 
+# Ordering
+index = order(GEI$Grain_yield, decreasing = FALSE)
+GEI = GEI[index,]
 
+# Plot
+(p_E <- GEI %>% ggplot(aes(Environment, Grain_yield)) +
+    geom_line(linewidth = 0.8, aes(group = Treat, color = Treat, 
+                                   alpha = ifelse(Treat %in% c('1', '10', '64', '24', '44', '7'), 1, 0.7))) +
+    labs(title = "Interaction between genotype and environment",
+         x = "Environment",
+         y = "Grain Yield (t/ha)") +
+    guides(color = guide_legend(title = "Genotype", ncol = 1), alpha = "none") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+    scale_color_manual(values = c("#003350", "#ff6441", "#cc662f", "#2F95CC", "#1F6650", '#4A7F99'),
+                       limits = c('1', '10', '64', '24', '44', '7'),
+                       breaks = c('1', '10', '64', '24', '44', '7')))
 
-ggplot(dados, aes(x = Name_city, y = Grain_yield, color = Name_city)) + 
-  geom_point() +
-  theme_bw() +
-  theme(
-    axis.text.x = element_blank(),
-    legend.position = "bottom",
-    legend.direction = "horizontal",
-    legend.title = element_blank(),
-    legend.text = element_text(size = 8),         # Reduz o tamanho do texto da legenda
-    legend.key.size = unit(0.3, "cm")             # Diminui o tamanho das chaves na legenda
-  ) +
-  guides(color = guide_legend(nrow = 1)) +        # Organiza a legenda em uma única linha
-  facet_wrap(~Treat) +
-  labs(x = "Locais", y = "Rendimento de Grão (t/ha)")
+# Box plot vertical por grupo
+boxplot(x ~ grupo, data = df, col = "white")
 
+# Puntos
+stripchart(x ~ grupo,
+           data = df,
+           method = "jitter",
+           pch = 19,
+           col = 2:4,
+           vertical = TRUE,
+           add = TRUE)
+
+# Boxplots ----
+ggplot(dados, aes(x = Environment, y = Grain_yield)) + 
+  geom_boxplot(fill = "#cc662f",
+               colour = "black",
+               alpha = 0.5,
+               outlier.colour = "#003350") + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1)) +
+  scale_color_manual()  # essa 
+ 
 
 #Analises Individuais
 library(lmtest)
