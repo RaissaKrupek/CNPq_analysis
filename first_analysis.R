@@ -80,7 +80,7 @@ ggplot(dados, aes(x = Environment, y = Grain_yield)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
   scale_color_manual()  # essa 
- 
+
 
 #Analises Individuais
 library(lmtest)
@@ -404,7 +404,7 @@ mod.tratd.local<- aov(Grain_yield ~ Name_city + Name_city:Block +
                         local.m[, "Name_cityN. S. das Dores"]:Treat +
                         local.m[, "Name_cityN. S. das Dores ($)"]:Treat +
                         local.m[, "Name_cityJanaúba"]:Treat,
-                        
+                      
                       data=dados)
 
 anova(mod.tratd.local)
@@ -417,10 +417,10 @@ library(agricolae)
 #Media das tratamentos dentro de cada local
 
 (tukey.treatd.L1 <- with(subset(dados, Name_city == "Planaltina"),
-                        HSD.test(Grain_yield, 
-                                 Treat,
-                                 45,
-                                 3.0)))
+                         HSD.test(Grain_yield, 
+                                  Treat,
+                                  45,
+                                  3.0)))
 
 (tukey.treatd.L2 <- with(subset(dados, Name_city == "Sinop"),
                          HSD.test(Grain_yield, 
@@ -471,10 +471,10 @@ library(agricolae)
                                   3.0)))
 
 (tukey.treatd.L10 <- with(subset(dados, Name_city == "Vilhena"),
-                         HSD.test(Grain_yield, 
-                                  Treat,
-                                  45,
-                                  3.0)))
+                          HSD.test(Grain_yield, 
+                                   Treat,
+                                   45,
+                                   3.0)))
 
 (tukey.treatd.L11 <- with(subset(dados, Name_city == "Sinop (2)"),
                           HSD.test(Grain_yield, 
@@ -594,10 +594,10 @@ install.packages("GGally")
 library(GGally)
 
 ggpairs(tukey.treat, columns= 1:4,
-       aes(x = Treat,
-           y = Grain_yield,
-           label = groups,
-           fill = Treat)) +
+        aes(x = Treat,
+            y = Grain_yield,
+            label = groups,
+            fill = Treat)) +
   geom_bar(stat = "identity") +
   geom_errorbar(aes(x = Treat,
                     ymin = Grain_yield - tukey.treatd.L1$statistics$MSD/2,
@@ -606,6 +606,6 @@ ggpairs(tukey.treat, columns= 1:4,
   geom_text(aes(x = Treat,
                 y = Grain_yield + tukey.treatd.L1$statistics$MSD/2 + 1)) +
   theme(legend.position = "button")
-  xlab("Tratamentos") +
+xlab("Tratamentos") +
   ylab("Rendimento de Graos")
 
