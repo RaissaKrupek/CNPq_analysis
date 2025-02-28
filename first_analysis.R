@@ -7,7 +7,7 @@ str(dados)
 library(dplyr)
 dados <- dados %>%
   mutate(Block = as.character(Block), 
-         Treat = as.character(Treat), 
+         Genotype = as.character(Genotype), 
          Environment = as.character(Environment),
          Grain_yield = as.numeric(Grain_yield, na.rm = TRUE),
          Season = as.character(Season))
@@ -15,8 +15,10 @@ str(dados)
 colnames(dados)
 
 library(ggplot2)
+
 # Distribution per environment ----
-ggplot(dados, aes(x = Treat, y = Grain_yield, color = Treat)) + 
+
+ggplot(dados, aes(x = Genotype, y = Grain_yield, color = Genotype)) + 
   geom_point() +
   theme_bw() +
   theme(
@@ -37,18 +39,18 @@ X11()
 library(tidyr)
 # GEI
 GEI <- dados %>% 
-  group_by(Environment, Treat) %>% 
+  group_by(Environment, Genotype) %>% 
   summarise(Grain_yield = mean(Grain_yield, na.rm = TRUE)) %>% 
   drop_na()
-67 
+ 
 # Ordering
 index = order(GEI$Grain_yield, decreasing = FALSE)
 GEI = GEI[index,]
 
 # Plot
 (p_E <- GEI %>% ggplot(aes(Environment, Grain_yield)) +
-    geom_line(linewidth = 0.8, aes(group = Treat, color = Treat, 
-                                   alpha = ifelse(Treat %in% c('1', '10', '64', '24', '44', '7'), 1, 0.7))) +
+    geom_line(linewidth = 0.8, aes(group = Genotype, color = Genotype, 
+                                   alpha = ifelse(Genotype %in% c('1', '10', '64', '24', '44', '7'), 1, 0.7))) +
     labs(title = "Interaction between genotype and environment",
          x = "Environment",
          y = "Grain Yield (t/ha)") +
@@ -59,17 +61,6 @@ GEI = GEI[index,]
                        limits = c('1', '10', '64', '24', '44', '7'),
                        breaks = c('1', '10', '64', '24', '44', '7')))
 
-# Box plot vertical por grupo
-boxplot(x ~ grupo, data = df, col = "white")
-
-# Puntos
-stripchart(x ~ grupo,
-           data = df,
-           method = "jitter",
-           pch = 19,
-           col = 2:4,
-           vertical = TRUE,
-           add = TRUE)
 
 # Boxplots ----
 ggplot(dados, aes(x = Environment, y = Grain_yield)) + 
@@ -79,513 +70,562 @@ ggplot(dados, aes(x = Environment, y = Grain_yield)) +
                outlier.colour = "#003350") + 
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust=1)) +
-  scale_color_manual()  # essa 
+  scale_color_manual() #essa linha faz com que possa escolher as cores manualmente 
 
 
-#Analises Individuais
+#ANOVA - grupo de experimentos com arranjo fatorial
 library(lmtest)
 
-#Local 1 - Planaltina
-mod.l1<- aov(Grain_yield ~ Block + Treat, 
+mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + Genotype:Season + 
+             Environment:Genotype + Environment:Season + Environment:Genotype:Season,
+           data=dados)
+
+anova(mod)
+
+#Analises Individuais para Cada Local ----
+library(lmtest)
+library(dplyr)
+
+# Local 1 - Planaltina
+mod.l1<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
              data=dados, 
-             subset = c(Name_city=="Planaltina"))
+             subset = c(Environment=="Planaltina"))
 
 shapiro.test(rstandard(mod.l1))
 
 lmtest::bptest(mod.l1) #studentized Breusch-Pagan test
 
-ggplot(subset(dados, Name_city=="Planaltina"),
-       aes(x = Treat,
-           y = rstudent(mod.l1))) +
-  geom_point()
+anova(mod.l1)
 
-anova(mod.l1)     
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "Planaltina"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l1), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")  
 
-#Local 2 - Sinop
-mod.l2<- aov(Grain_yield ~ Block + Treat,
-             data = dados,
-             subset = c(Name_city=="Sinop"))
+
+# Local 2 - Sinop 01
+mod.l2<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="Sinop 01"))
 
 shapiro.test(rstandard(mod.l2))
 
 lmtest::bptest(mod.l2) #studentized Breusch-Pagan test
 
-ggplot(subset(dados, Name_city=="Planaltina"),
-       aes(x = Treat,
-           y = rstudent(mod.l2))) +
-  geom_point()
+anova(mod.l2)
 
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "Sinop 01"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l2), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none") 
 
-anova(mod.l2)     
-
-#Local 3 - C. Mourão        
-mod.l3<- aov(Grain_yield ~ Block + Treat,
-             data = dados,
-             subset = c(Name_city=="C. Mourão"))
+#Local 3 - C. Mourão 02
+mod.l3<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="C. Mourão 02"))
 
 shapiro.test(rstandard(mod.l3))
 
 lmtest::bptest(mod.l3) #studentized Breusch-Pagan test
 
-ggplot(subset(dados, Name_city=="Planaltina"),
-       aes(x = Treat,
-           y = rstudent(mod.l3))) +
-  geom_point()
+anova(mod.l3)
 
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "C. Mourão 02"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l3), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none") 
 
-anova(mod.l3)     
-
-#Local 4 - Londrina
-mod.l4<- aov(Grain_yield ~ Block + Treat,
-             data = dados,
-             subset = c(Name_city=="Londrina"))
+# Local 4 - Londrina
+mod.l4<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="Londrina"))
 
 shapiro.test(rstandard(mod.l4))
 
 lmtest::bptest(mod.l4) #studentized Breusch-Pagan test
 
-ggplot(subset(dados, Name_city=="Londrina"),
-       aes(x = Treat,
-           y = rstudent(mod.l4))) +
-  geom_point()
+anova(mod.l4)
 
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "Londrina"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l4), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none") 
 
-anova(mod.l4) 
-
-#Local 5 - 7 Lagoas ($)
-mod.l5 <- aov(Grain_yield ~ Block + Treat,
-              data = dados,
-              subset = c(Name_city == "7 Lagoas ($)"))
+#Local 5 - 7 Lagoas 
+mod.l5<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="7 Lagoas"))
 
 shapiro.test(rstandard(mod.l5))
 
 lmtest::bptest(mod.l5) #studentized Breusch-Pagan test
 
-ggplot(subset(dados, Name_city == "7 Lagoas ($)"),
-       aes(x = Treat,
-           y = rstudent(mod.l5))) +
-  geom_point()
-
 anova(mod.l5)
 
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "7 Lagoas"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l3), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none") 
+
 #Local 6 - Goiânia
-mod.l6 <- aov(Grain_yield ~ Block + Treat,
-              data = dados,
-              subset = c(Name_city == "Goiânia"))
+mod.l6<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="Goiânia"))
 
 shapiro.test(rstandard(mod.l6))
 
-lmtest::bptest(mod.l6)
-
-ggplot(subset(dados, Name_city == "Goiânia"),
-       aes(x = Treat,
-           y = rstudent(mod.6))) +
-  geom_point()
+lmtest::bptest(mod.l6) #studentized Breusch-Pagan test
 
 anova(mod.l6)
 
-#Local 7 - Londrina (2)
-mod.l7 <- aov(Grain_yield ~ Block + Treat,
-              data = dados,
-              subset = c(Name_city == "Londrina (2)"))
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "Goiânia"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l6), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none") 
+
+#Local 7 - Dourados
+mod.l7<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="Dourados"))
 
 shapiro.test(rstandard(mod.l7))
 
-lmtest::bptest(mod.l7)
-
-ggplot(subset(dados, Name_city == "Londrina (2)"),
-       aes(x = Treat,
-           y = rstandard(mod.l7))) +
-  geom_point()
+lmtest::bptest(mod.l7) #studentized Breusch-Pagan test
 
 anova(mod.l7)
 
-#Local 8 - Dourados
-mod.l8 <- aov(Grain_yield ~ Block + Treat,
-              data = dados,
-              subset = c(Name_city == "Dourados"))
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "Dourados"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l7), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")
+
+#Local 8 - S. Rai. das Mangabeiras
+mod.l8<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="S. Rai. das Mangabeiras"))
 
 shapiro.test(rstandard(mod.l8))
 
-lmtest::bptest(mod.l8)
-
-ggplot(subset(dados, Name_city == "Dourados"),
-       aes(x = Treat,
-           y = rstandard(mod.l8))) +
-  geom_point()
+lmtest::bptest(mod.l8) #studentized Breusch-Pagan test
 
 anova(mod.l8)
-#Nao rejeita H0 - media dos tratamentos nao diferem entre si
 
-#Local 9 - S. Rai. das Mangabeiras
-mod.l9 <- aov(Grain_yield ~ Block + Treat,
-              data = dados,
-              subset = c(Name_city == "S. Rai. das Mangabeiras"))
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "S. Rai. das Mangabeiras"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l8), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")
+
+#Local 9 - Vilhena
+mod.l9<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="Vilhena"))
 
 shapiro.test(rstandard(mod.l9))
 
-lmtest::bptest(mod.l9)
-
-ggplot(subset(dados, Name_city == "S. Rai. das Mangabeiras"),
-       aes(x = Treat,
-           y = rstandard(mod.l9))) +
-  geom_point()
+lmtest::bptest(mod.l9) #studentized Breusch-Pagan test
 
 anova(mod.l9)
 
-#Local 10 - Vilhena
-mod.l10 <- aov(Grain_yield ~ Block + Treat,
-               data = dados,
-               subset = c(Name_city == "Vilhena"))
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "Vilhena"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l9), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")
+
+#Local 10 - Sinop 02
+mod.l10<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="Sinop 02"))
 
 shapiro.test(rstandard(mod.l10))
 
-lmtest::bptest(mod.l10)
-
-ggplot(subset(dados, Name_city == "Vilhena"),
-       aes(x = Treat,
-           y = rstandard(mod.l10))) +
-  geom_point()
+lmtest::bptest(mod.l10) #studentized Breusch-Pagan test
 
 anova(mod.l10)
 
-#Local 11 - Sinop (2)
-mod.l11 <- aov(Grain_yield ~ Block + Treat,
-               data = dados,
-               subset = c(Name_city == "Sinop (2)"))
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "Sinop 02"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l10), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")
+
+#Local11 - C. Mourão 02
+mod.l11<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="C. Mourão 02"))
 
 shapiro.test(rstandard(mod.l11))
 
-lmtest::bptest(mod.l11)
-
-ggplot(subset(dados, Name_city == "Sinop (2)"),
-       aes(x = Treat,
-           y = rstandard(mod.l11))) +
-  geom_point()
+lmtest::bptest(mod.l11) #studentized Breusch-Pagan test
 
 anova(mod.l11)
 
-#Local12 - C. Mourão (2)
-mod.l12 <- aov(Grain_yield ~ Block + Treat,
-               data = dados,
-               subset = c(Name_city == "C. Mourão (2)"))
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "C. Mourão 02"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l11), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")
+
+#Local12 - N. S. das Dores 01
+mod.l12<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+             data=dados, 
+             subset = c(Environment=="N. S. das Dores 01"))
 
 shapiro.test(rstandard(mod.l12))
 
-lmtest::bptest(mod.l12)
-
-ggplot(subset(dados, Name_city == "C. Mourão (2)"),
-       aes(x = Treat,
-           y = rstandard(mod.l12))) +
-  geom_point()
+lmtest::bptest(mod.l12) #studentized Breusch-Pagan test
 
 anova(mod.l12)
 
-#Local13 - N. S. das Dores ($)
-mod.l13 <- aov(Grain_yield ~ Block + Treat,
-               data = dados,
-               subset = c(Name_city == "N. S. das Dores ($)"))
+#grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "N. S. das Dores 01"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l12), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")
+
+#Local13 - N. S. das Dores 02
+mod.l13<- aov(Grain_yield ~ Block + Genotype + Season + Genotype:Season, 
+              data=dados, 
+              subset = c(Environment=="N. S. das Dores 02"))
 
 shapiro.test(rstandard(mod.l13))
 
-lmtest::bptest(mod.l13)
-
-ggplot(subset(dados, Name_city == "N. S. das Dores ($)"),
-       aes(x = Treat,
-           y = rstandard(mod.l13))) +
-  geom_point()
+lmtest::bptest(mod.l13) #studentized Breusch-Pagan test
 
 anova(mod.l13)
 
-#Local14 - N. S. das Dores
-mod.l14 <- aov(Grain_yield ~ Block + Treat,
-               data = dados,
-               subset = c(Name_city == "N. S. das Dores"))
+      #grafico para verificar homogeneidade de variancias 
+ggplot(dados %>% filter(Environment == "N. S. das Dores 02"),
+       aes(x = Genotype, 
+           y = rstudent(mod.l13), 
+           color = Genotype)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Tratamento", y = "Resíduos Padronizados", title = "Resíduos vs Tratamento") +
+  theme(legend.position = "none")
 
-shapiro.test(rstandard(mod.l14))
-
-lmtest::bptest(mod.l14)
-
-ggplot(subset(dados, Name_city == "N. S. das Dores"),
-       aes(x = Treat,
-           y = rstandard(mod.l14))) +
-  geom_point()
-
-anova(mod.l14)
-
-#Local15 - Janaúba
-mod.l15 <- aov(Grain_yield ~ Block + Treat,
-               data = dados,
-               subset = c(Name_city == "Janaúba"))
-
-shapiro.test(rstandard(mod.l15))
-
-lmtest::bptest(mod.l15)
-
-ggplot(subset(dados, Name_city == "Janaúba"),
-       aes(x = Treat,
-           y = rstandard(mod.l15))) +
-  geom_point()
-
-anova(mod.l15)
 
 # Análise Conjunta
 
 # Razão entre os quadrados médios dos resíduos
 
-(QMResiduo1<- anova(mod.l1)$"Mean Sq"[3])
-(QMResiduo2<- anova(mod.l2)$"Mean Sq"[3])
-(QMResiduo3<- anova(mod.l3)$"Mean Sq"[3])
-(QMResiduo4<- anova(mod.l4)$"Mean Sq"[3])
-(QMResiduo5<- anova(mod.l5)$"Mean Sq"[3])
-(QMResiduo6<- anova(mod.l6)$"Mean Sq"[3])
-(QMResiduo7<- anova(mod.l7)$"Mean Sq"[3])
-(QMResiduo8<- anova(mod.l8)$"Mean Sq"[3])
-(QMResiduo9<- anova(mod.l9)$"Mean Sq"[3])
-(QMResiduo10<- anova(mod.l10)$"Mean Sq"[3])
-(QMResiduo11<- anova(mod.l11)$"Mean Sq"[3])
-(QMResiduo12<- anova(mod.l12)$"Mean Sq"[3])
-(QMResiduo13<- anova(mod.l13)$"Mean Sq"[3])
-(QMResiduo14<- anova(mod.l14)$"Mean Sq"[3])
-(QMResiduo15<- anova(mod.l15)$"Mean Sq"[3])
+(QMResiduo1<- anova(mod.l1)$"Mean Sq"[5])
+(QMResiduo2<- anova(mod.l2)$"Mean Sq"[5])
+(QMResiduo3<- anova(mod.l3)$"Mean Sq"[5])
+(QMResiduo4<- anova(mod.l4)$"Mean Sq"[5])
+(QMResiduo5<- anova(mod.l5)$"Mean Sq"[5])
+(QMResiduo6<- anova(mod.l6)$"Mean Sq"[5])
+(QMResiduo7<- anova(mod.l7)$"Mean Sq"[5])
+(QMResiduo8<- anova(mod.l8)$"Mean Sq"[5])
+(QMResiduo9<- anova(mod.l9)$"Mean Sq"[5])
+(QMResiduo10<- anova(mod.l10)$"Mean Sq"[5])
+(QMResiduo11<- anova(mod.l11)$"Mean Sq"[5])
+(QMResiduo12<- anova(mod.l12)$"Mean Sq"[5])
+(QMResiduo13<- anova(mod.l13)$"Mean Sq"[5])
+
 
 QMResiduo<- c(QMResiduo1, QMResiduo2, QMResiduo3, QMResiduo4, QMResiduo5, 
               QMResiduo6, QMResiduo7, QMResiduo8, QMResiduo9, QMResiduo10, 
-              QMResiduo11, QMResiduo12, QMResiduo13, QMResiduo14, QMResiduo15)
+              QMResiduo11, QMResiduo12, QMResiduo13)
 
 (max(QMResiduo) / min(QMResiduo))
 
-# ANOVA 
-mod.conj <- aov(Grain_yield ~ Name_city + Name_city:Block+
-                  Treat + Name_city:Treat, 
-                data=dados)
-anova(mod.conj)
+# ANOVA modelo conjunto - ja colocada acima
+library(lmtest)
+mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + Genotype:Season + 
+             Environment:Genotype + Environment:Season + Environment:Genotype:Season,
+           data=dados)
+
+anova(mod)
 
 ## Análise exploratória (descritiva)
+
+# Interacao Genotipo Ambiente - Grain_yield vs. Genotype
 library(ggplot2)
 ggplot(data=dados,
-       aes(x = Treat,
+       aes(x = Genotype,
            y = Grain_yield,
-           color = Name_city,
-           group = Name_city)) + 
+           color = Environment,
+           group = Environment)) + 
   geom_point(stat = "summary",
              fun = "mean") +
   geom_line(stat = "summary",
             fun = "mean") +
-  xlab("Treatment") +
+  xlab("Genotypement") +
   ylab("Grain_yield") +
   theme_bw() +
   theme(legend.position = "bottom",
         legend.direction = "horizontal",
         legend.title = element_blank())
 
-# Como o efeito da interação entre Locais e Tratamentos foi significativo,
-# vamos avaliar o efeito de Tratamentos dentro de cada um dos Locais.
+# Interacao Genotipo Ambiente - outra forma de abordar o grafico feito pela vitoria
+library(ggplot2)
+ggplot(data=dados,
+       aes(x = Environment,
+           y = Grain_yield,
+           color = Genotype,
+           group = Genotype)) + 
+  geom_point(stat = "summary",
+             fun = "mean") +
+  geom_line(stat = "summary",
+            fun = "mean") +
+  xlab("Environment") +
+  ylab("Grain Yield (t/ha)") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust=1))+
+  guides(color = guide_legend(title = "Genotype", ncol = 2, alpha = "none"))
 
-## Efeito de Tratamentos dentro de cada Local
 
-local.m <- model.matrix( ~ Name_city - 1, 
+        #   element_blank(),
+        # 
+        # 
+        # guides(color = guide_legend(title = "Genotype", ncol = 2), alpha = "none"))
+
+## Como o efeito da interação entre Locais e Tratamentos foi significativo,vamos avaliar o efeito de Tratamentos dentro de cada um dos Locais.
+
+# Efeito de Tratamentos dentro de cada Local - Segundo o Augusto nao sera necessario incluir na analise
+
+local.m <- model.matrix( ~ Environment - 1, 
                          dados)
 colnames(local.m)
 
-mod.tratd.local<- aov(Grain_yield ~ Name_city + Name_city:Block + 
-                        local.m[, "Name_cityPlanaltina"]:Treat + # efeito de Tratamento dentro do Local L1
-                        local.m[, "Name_citySinop"]:Treat + 
-                        local.m[, "Name_cityC. Mourão"]:Treat +
-                        local.m[, "Name_cityLondrina"]:Treat +
-                        local.m[, "Name_city7 Lagoas ($)"]:Treat +
-                        local.m[, "Name_cityGoiânia"]:Treat +
-                        local.m[, "Name_cityLondrina (2)"]:Treat +
-                        local.m[, "Name_cityDourados"]:Treat +
-                        local.m[, "Name_cityS. Rai. das Mangabeiras"]:Treat +
-                        local.m[, "Name_cityVilhena"]:Treat +
-                        local.m[, "Name_citySinop (2)"]:Treat +
-                        local.m[, "Name_cityC. Mourão (2)"]:Treat +
-                        local.m[, "Name_cityN. S. das Dores"]:Treat +
-                        local.m[, "Name_cityN. S. das Dores ($)"]:Treat +
-                        local.m[, "Name_cityJanaúba"]:Treat,
-                      
+mod.tratd.local<- aov(Grain_yield ~ Environment + Environment/Block + 
+                        local.m[, "EnvironmentPlanaltina"]:Genotype + # efeito de Tratamento dentro do Local L1
+                        local.m[, "EnvironmentSinop 01"]:Genotype + 
+                        local.m[, "EnvironmentC. Mourão 01"]:Genotype +
+                        local.m[, "EnvironmentLondrina"]:Genotype +
+                        local.m[, "Environment7 Lagoas"]:Genotype +
+                        local.m[, "EnvironmentGoiânia"]:Genotype +
+                        local.m[, "EnvironmentDourados"]:Genotype +
+                        local.m[, "EnvironmentS. Rai. das Mangabeiras"]:Genotype +
+                        local.m[, "EnvironmentVilhena"]:Genotype +
+                        local.m[, "EnvironmentSinop 02"]:Genotype +
+                        local.m[, "EnvironmentC. Mourão 02"]:Genotype +
+                        local.m[, "EnvironmentN. S. das Dores 01"]:Genotype +
+                        local.m[, "EnvironmentN. S. das Dores 02"]:Genotype, 
                       data=dados)
 
 anova(mod.tratd.local)
 
-## Vilhena e C.Mourao(2) nao foram significativo para os tratamentos -> trat nao diferem dentro dos respectivos locais  
+# Duvida em relacao ao modelo acima
+# mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + Genotype:Season + 
+#              Environment:Genotype + Environment:Season + Environment:Genotype:Season,
+#            data=dados)
+
 
 ## Comparações múltiplas 
 library(agricolae)
 
-#Media das tratamentos dentro de cada local
+#Media das tratamentos dentro de cada local - Tukey eh um teste mais concervacao, como nao ha variacoes mto grandes eh normal nao dar tantas diferencas significativas
 
-(tukey.treatd.L1 <- with(subset(dados, Name_city == "Planaltina"),
+(tukey.Genotyped.L1 <- with(subset(dados, Environment == "Planaltina"),
                          HSD.test(Grain_yield, 
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L2 <- with(subset(dados, Name_city == "Sinop"),
+(tukey.Genotyped.L2 <- with(subset(dados, Environment == "Sinop 01"),
                          HSD.test(Grain_yield, 
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L3 <- with(subset(dados, Name_city == "C. Mourão"),
+(tukey.Genotyped.L3 <- with(subset(dados, Environment == "C. Mourão 01"),
                          HSD.test(Grain_yield, 
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L4 <- with(subset(dados, Name_city == "Londrina"),
+(tukey.Genotyped.L4 <- with(subset(dados, Environment == "Londrina"),
                          HSD.test(Grain_yield, 
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L5 <- with(subset(dados, Name_city == "7 Lagoas ($)"),
+(tukey.Genotyped.L5 <- with(subset(dados, Environment == "7 Lagoas"),
                          HSD.test(Grain_yield,
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L6 <- with(subset(dados, Name_city == "Goiânia"),
+(tukey.Genotyped.L6 <- with(subset(dados, Environment == "Goiânia"),
                          HSD.test(Grain_yield, 
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L7 <- with(subset(dados, Name_city == "Londrina (2)"),
+
+(tukey.Genotyped.L7 <- with(subset(dados, Environment == "Dourados"),
                          HSD.test(Grain_yield, 
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L8 <- with(subset(dados, Name_city == "Dourados"),
+(tukey.Genotyped.L8 <- with(subset(dados, Environment == "S. Rai. das Mangabeiras"),
                          HSD.test(Grain_yield, 
-                                  Treat,
+                                  Genotype,
                                   45,
                                   3.0)))
 
-(tukey.treatd.L9 <- with(subset(dados, Name_city == "S. Rai. das Mangabeiras"),
-                         HSD.test(Grain_yield, 
-                                  Treat,
-                                  45,
-                                  3.0)))
-
-(tukey.treatd.L10 <- with(subset(dados, Name_city == "Vilhena"),
+(tukey.Genotyped.L9 <- with(subset(dados, Environment == "Vilhena"),
                           HSD.test(Grain_yield, 
-                                   Treat,
+                                   Genotype,
                                    45,
                                    3.0)))
 
-(tukey.treatd.L11 <- with(subset(dados, Name_city == "Sinop (2)"),
+(tukey.Genotyped.L10 <- with(subset(dados, Environment == "Sinop 02"),
                           HSD.test(Grain_yield, 
-                                   Treat,
+                                   Genotype,
                                    45,
                                    3.0)))
 
-(tukey.treatd.L12 <- with(subset(dados, Name_city == "C. Mourão (2)"),
+(tukey.Genotyped.L11 <- with(subset(dados, Environment == "C. Mourão 02"),
                           HSD.test(Grain_yield, 
-                                   Treat,
+                                   Genotype,
                                    45,
                                    3.0)))
 
-(tukey.treatd.L13 <- with(subset(dados, Name_city == "N. S. das Dores"),
+(tukey.Genotyped.L12 <- with(subset(dados, Environment == "N. S. das Dores 01"),
                           HSD.test(Grain_yield, 
-                                   Treat,
+                                   Genotype,
                                    45,
                                    3.0)))
 
-(tukey.treatd.L14 <- with(subset(dados, Name_city == "N. S. das Dores ($)"),
+(tukey.Genotyped.L13 <- with(subset(dados, Environment == "N. S. das Dores 02"),
                           HSD.test(Grain_yield, 
-                                   Treat,
-                                   45,
-                                   3.0)))
-
-(tukey.treatd.L15 <- with(subset(dados, Name_city == "Janaúba"),
-                          HSD.test(Grain_yield, 
-                                   Treat,
+                                   Genotype,
                                    45,
                                    3.0)))
 
 
 
+tukey.Genotyped.L1$groups$Genotype <- rownames(tukey.Genotyped.L1$groups)
+tukey.Genotyped.L1$groups$Environment <- "Planaltina"
 
-tukey.treatd.L1$groups$Treat <- rownames(tukey.treatd.L1$groups)
-tukey.treatd.L1$groups$Name_city <- "Planaltina"
+tukey.Genotyped.L2$groups$Genotype <- rownames(tukey.Genotyped.L2$groups)
+tukey.Genotyped.L2$groups$Environment <- "Sinop 01"
 
-tukey.treatd.L2$groups$Treat <- rownames(tukey.treatd.L2$groups)
-tukey.treatd.L2$groups$Name_city <- "Sinop"
+tukey.Genotyped.L3$groups$Genotype <- rownames(tukey.Genotyped.L3$groups)
+tukey.Genotyped.L3$groups$Environment <- "C. Mourão 01"
 
-tukey.treatd.L3$groups$Treat <- rownames(tukey.treatd.L3$groups)
-tukey.treatd.L3$groups$Name_city <- "C. Mourão"
+tukey.Genotyped.L4$groups$Genotype <- rownames(tukey.Genotyped.L4$groups)
+tukey.Genotyped.L4$groups$Environment <- "Londrina"
 
-tukey.treatd.L4$groups$Treat <- rownames(tukey.treatd.L4$groups)
-tukey.treatd.L4$groups$Name_city <- "Londrina"
+tukey.Genotyped.L5$groups$Genotype <- rownames(tukey.Genotyped.L5$groups)
+tukey.Genotyped.L5$groups$Environment <- "7 Lagoas"
 
-tukey.treatd.L5$groups$Treat <- rownames(tukey.treatd.L5$groups)
-tukey.treatd.L5$groups$Name_city <- "7 Lagoas ($)"
+tukey.Genotyped.L6$groups$Genotype <- rownames(tukey.Genotyped.L6$groups)
+tukey.Genotyped.L6$groups$Environment <- "Goiânia"
 
-tukey.treatd.L6$groups$Treat <- rownames(tukey.treatd.L6$groups)
-tukey.treatd.L6$groups$Name_city <- "Goiânia"
+tukey.Genotyped.L7$groups$Genotype <- rownames(tukey.Genotyped.L8$groups)
+tukey.Genotyped.L7$groups$Environment <- "Dourados"
 
-tukey.treatd.L7$groups$Treat <- rownames(tukey.treatd.L7$groups)
-tukey.treatd.L7$groups$Name_city <- "Londrina (2)"
+tukey.Genotyped.L8$groups$Genotype <- rownames(tukey.Genotyped.L9$groups)
+tukey.Genotyped.L8$groups$Environment <- "S. Rai. das Mangabeiras"
 
-tukey.treatd.L8$groups$Treat <- rownames(tukey.treatd.L8$groups)
-tukey.treatd.L8$groups$Name_city <- "Dourados"
+tukey.Genotyped.L9$groups$Genotype <- rownames(tukey.Genotyped.L10$groups)
+tukey.Genotyped.L9$groups$Environment <- "Vilhena"
 
-tukey.treatd.L9$groups$Treat <- rownames(tukey.treatd.L9$groups)
-tukey.treatd.L9$groups$Name_city <- "S. Rai. das Mangabeiras"
+tukey.Genotyped.L10$groups$Genotype <- rownames(tukey.Genotyped.L11$groups)
+tukey.Genotyped.L10$groups$Environment <- "Sinop 02"
 
-tukey.treatd.L10$groups$Treat <- rownames(tukey.treatd.L10$groups)
-tukey.treatd.L10$groups$Name_city <- "Vilhena"
+tukey.Genotyped.L11$groups$Genotype <- rownames(tukey.Genotyped.L12$groups)
+tukey.Genotyped.L11$groups$Environment <- "C. Mourão 02"
 
-tukey.treatd.L11$groups$Treat <- rownames(tukey.treatd.L11$groups)
-tukey.treatd.L11$groups$Name_city <- "Sinop (2)"
+tukey.Genotyped.L12$groups$Genotype <- rownames(tukey.Genotyped.L13$groups)
+tukey.Genotyped.L12$groups$Environment <- "N. S. das Dores 01"
 
-tukey.treatd.L12$groups$Treat <- rownames(tukey.treatd.L12$groups)
-tukey.treatd.L12$groups$Name_city <- "C. Mourão (2)"
+tukey.Genotyped.L13$groups$Genotype <- rownames(tukey.Genotyped.L14$groups)
+tukey.Genotyped.L13$groups$Environment <- "N. S. das Dores 02"
 
-tukey.treatd.L13$groups$Treat <- rownames(tukey.treatd.L13$groups)
-tukey.treatd.L13$groups$Name_city <- "N. S. das Dores ($)"
 
-tukey.treatd.L14$groups$Treat <- rownames(tukey.treatd.L14$groups)
-tukey.treatd.L14$groups$Name_city <- "N. S. das Dores"
 
-tukey.treatd.L15$groups$Treat <- rownames(tukey.treatd.L15$groups)
-tukey.treatd.L15$groups$Name_city <- "Janaúba"
-
-(tukey.treat <- data.frame(rbind(
-  tukey.treatd.L1$groups,
-  tukey.treatd.L2$groups,
-  tukey.treatd.L3$groups,
-  tukey.treatd.L4$groups,
-  tukey.treatd.L5$groups,
-  tukey.treatd.L6$groups,
-  tukey.treatd.L7$groups,
-  tukey.treatd.L8$groups,
-  tukey.treatd.L9$groups,
-  tukey.treatd.L10$groups,
-  tukey.treatd.L11$groups,
-  tukey.treatd.L12$groups,
-  tukey.treatd.L13$groups,
-  tukey.treatd.L14$groups,
-  tukey.treatd.L15$groups
+(tukey.Genotype <- data.frame(rbind(
+  tukey.Genotyped.L1$groups,
+  tukey.Genotyped.L2$groups,
+  tukey.Genotyped.L3$groups,
+  tukey.Genotyped.L4$groups,
+  tukey.Genotyped.L5$groups,
+  tukey.Genotyped.L6$groups,
+  tukey.Genotyped.L7$groups,
+  tukey.Genotyped.L8$groups,
+  tukey.Genotyped.L9$groups,
+  tukey.Genotyped.L10$groups,
+  tukey.Genotyped.L11$groups,
+  tukey.Genotyped.L12$groups,
+  tukey.Genotyped.L13$groups
 )))
 
 
 #plots individuais
-ggplot(tukey.treatd.L1$groups,
-       aes(x = Treat,
+ggplot(tukey.Genotyped.L1$groups,
+       aes(x = Genotype,
            y = Grain_yield,
            label = groups,
-           fill = Treat)) +
+           fill = Genotype)) +
   geom_bar(stat = "identity") +
-  geom_errorbar(aes(x = Treat,
-                    ymin = Grain_yield - tukey.treatd.L1$statistics$MSD/2,
-                    ymax = Grain_yield + tukey.treatd.L1$statistics$MSD/2)) +
+  geom_errorbar(aes(x = Genotype,
+                    ymin = Grain_yield - tukey.Genotyped.L1$statistics$MSD/2,
+                    ymax = Grain_yield + tukey.Genotyped.L1$statistics$MSD/2)) +
   facet_grid(~ Name_city) +
-  geom_text(aes(x = Treat,
-                y = Grain_yield + tukey.treatd.L1$statistics$MSD/2 + 1)) +
+  geom_text(aes(x = Genotype,
+                y = Grain_yield + tukey.Genotyped.L1$statistics$MSD/2 + 1)) +
   xlab("Tratamentos") +
   ylab("Rendimento de Graos")
 
@@ -593,18 +633,18 @@ ggplot(tukey.treatd.L1$groups,
 install.packages("GGally")
 library(GGally)
 
-ggpairs(tukey.treat, columns= 1:4,
-        aes(x = Treat,
+ggpairs(tukey.Genotype, columns= 1:4,
+        aes(x = Genotype,
             y = Grain_yield,
             label = groups,
-            fill = Treat)) +
+            fill = Genotype)) +
   geom_bar(stat = "identity") +
-  geom_errorbar(aes(x = Treat,
-                    ymin = Grain_yield - tukey.treatd.L1$statistics$MSD/2,
-                    ymax = Grain_yield + tukey.treatd.L1$statistics$MSD/2)) +
-  facet_grid(~ Name_city) +
-  geom_text(aes(x = Treat,
-                y = Grain_yield + tukey.treatd.L1$statistics$MSD/2 + 1)) +
+  geom_errorbar(aes(x = Genotype,
+                    ymin = Grain_yield - tukey.Genotyped.L1$statistics$MSD/2,
+                    ymax = Grain_yield + tukey.Genotyped.L1$statistics$MSD/2)) +
+  facet_grid(~ Environment) +
+  geom_text(aes(x = Genotype,
+                y = Grain_yield + tukey.Genotyped.L1$statistics$MSD/2 + 1)) +
   theme(legend.position = "button")
 xlab("Tratamentos") +
   ylab("Rendimento de Graos")
