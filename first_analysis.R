@@ -54,7 +54,7 @@ GEI = GEI[index,]
 # Plot 
 (p_E <- GEI %>% ggplot(aes(Environment, Grain_yield)) +
     geom_line(linewidth = 0.8, aes(group = Genotype, color = Genotype, 
-                                   alpha = ifelse(Genotype %in% c('1', '10', '64', '24', '44', '7'), 1, 0.7))) +
+                                   alpha = ifelse(Genotype %in% c('10', '23', '64', '24', '44', '51'), 1, 0.7))) +
     labs(title = "Interaction between Genotype and Environment",
          x = "Environment",
          y = "Grain Yield (t/ha)") +
@@ -62,8 +62,8 @@ GEI = GEI[index,]
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     scale_color_manual(values = c("#003350", "#ff6441", "#cc662f", "#2F95CC", "#1F6650", '#4A7F99'),
-                       limits = c('1', '10', '64', '24', '44', '7'),
-                       breaks = c('1', '10', '64', '24', '44', '7')))
+                       limits = c('10', '23', '64', '24', '44', '51'),
+                       breaks = c('10', '23', '64', '24', '44', '51')))
 
 
 
@@ -126,15 +126,39 @@ ggplot(dados, aes(x = Environment, y = Grain_yield)) +
 
 #ANOVA - grupo de experimentos com arranjo fatorial
 library(lmtest)
+library(dplyr)
 
-mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + Genotype:Season + 
+mod <- aov(Grain_yield ~ Environment + Environment/Block + Genotype + Season + Genotype:Season +
              Environment:Genotype + Environment:Season + Environment:Genotype:Season,
            data=dados)
 
+
 anova(mod)
 
+anova_table <- as.data.frame(anova(mod))
+
+# Melhorar os nomes das colunas
+colnames(anova_table) <- c("GL", "SQ", "QM", "F-Valor", "Pr(>F)")
+
+# Arredondar as colunas numéricas para 2 casas decimais
+anova_table[, c("SQ", "QM", "F-Valor", "Pr(>F)")] <- round(anova_table[, c("SQ", "QM", "F-Valor", "Pr(>F)")], 2)
 
 
+# Adicionar asteriscos no p-valor
+anova_table <- anova_table %>%
+  mutate(`Pr(>F)` = case_when(
+    `Pr(>F)` < 0.001 ~ paste0(`Pr(>F)`, "***"),
+    `Pr(>F)` < 0.01  ~ paste0(`Pr(>F)`, "**"),
+    `Pr(>F)` < 0.05  ~ paste0(`Pr(>F)`, "*"),
+    TRUE ~ as.character(`Pr(>F)`)
+  ))
+
+# Criar uma tabela interativa com melhor formatação
+DT::datatable(anova_table, 
+              extensions = 'Buttons',
+              class = "display")
+
+  
 #Analises Individuais para Cada Local ----
 # nao precisa ser colocado no app
 library(lmtest)
